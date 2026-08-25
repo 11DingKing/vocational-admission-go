@@ -1,0 +1,44 @@
+{
+  "schema_version": "2026-08-foundation-1",
+  "batch_id": "20260825-vocational-admission-go-compact10",
+  "repository_url": "https://github.com/11DingKing/vocational-admission-go",
+  "baseline_sha": "98242fe49547472448682664a78c5befcde97ba5",
+  "main_ref": "main",
+  "project_variant": "backend",
+  "foundation_profile": "compact_10",
+  "task_count": 10,
+  "go_version": "go1.26.1",
+  "go_mod_version": "1.23",
+  "scale": {
+    "frontend_files": 0,
+    "frontend_lines": 0,
+    "production_files": 43,
+    "production_lines": 2000,
+    "production_nonblank_lines": 1874,
+    "production_packages": 12,
+    "test_files": 11,
+    "test_lines": 1516,
+    "test_nonblank_lines": 1493
+  },
+  "database": {
+    "engine": "SQLite via modernc.org/sqlite",
+    "migrations": ["001 schema_migrations", "002 users and sessions", "003 province_rules and plans", "004 major_groups and applications", "005 decisions audit_events jobs"],
+    "tables": ["users", "sessions", "province_rules", "plans", "major_groups", "applications", "decisions", "audit_events", "jobs"],
+    "transactions": ["application submission reserves major-group and plan capacity atomically", "decision writes state transition and audit decision"],
+    "concurrency": "conditional capacity updates and optimistic version checks",
+    "recovery": "migrations are idempotent; restart recovery test reopens a file database"
+  },
+  "validation": {
+    "go_test": {"command": "GOCACHE=/tmp/voc-gocache go test ./... -count=1", "exit_code": 0},
+    "go_test_race": {"command": "GOCACHE=/tmp/voc-gocache go test -race ./... -count=1", "exit_code": 0},
+    "go_vet": {"command": "GOCACHE=/tmp/voc-gocache go vet ./...", "exit_code": 0},
+    "go_build": {"command": "GOCACHE=/tmp/voc-gocache go build ./...", "exit_code": 0},
+    "measure_project": {"command": "go run .agents/skills/go-base-project-create/scripts/measure_project.go -root 20260825-vocational-admission-go", "exit_code": 0}
+  },
+  "docker": {
+    "amd64": {"image": "vocational-admission:foundation-amd64", "platform": "linux/amd64", "build_exit_code": 0, "inspect": "linux/amd64", "health": "{\"status\":\"ok\"}", "ready": "{\"status\":\"ready\"}"},
+    "arm64": {"image": "vocational-admission:foundation-arm64", "platform": "linux/arm64", "build_exit_code": 0, "inspect": "linux/arm64", "health": "{\"status\":\"ok\"}", "ready": "{\"status\":\"ready\"} "}
+  },
+  "public_visibility": {"provider": "github", "api": "gh api repos/11DingKing/vocational-admission-go", "visibility": "public", "default_branch": "main"},
+  "runtime_boundaries": ["plan lifecycle and lock/publish/close transitions", "province-specific score and rank rules", "professional-group capacity reservation", "idempotent application submission", "parallel review and optimistic decisions", "admission/rejection/withdrawal state machine", "audit and decision history", "session login expiry and revocation", "worker notification retry and cancellation", "restart migration and persistent recovery"]
+}

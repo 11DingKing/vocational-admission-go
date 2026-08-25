@@ -1,0 +1,15 @@
+{
+  "schema_version": "2026-08-foundation-1",
+  "batch_id": "20260825-vocational-admission-go-compact10",
+  "stage": "base_ready",
+  "next_stage": "candidate_design",
+  "baseline_sha": "98242fe49547472448682664a78c5befcde97ba5",
+  "foundation_profile": "compact_10",
+  "task_count": 10,
+  "next_index": 1,
+  "accepted_count": 0,
+  "items": [],
+  "continuation_token": "",
+  "rejected_candidate_sha256": [],
+  "evidence": {"manifest": ".gomark-authoring/20260825-vocational-admission-go-compact10/base_manifest.json", "public_visibility": "public"}
+}
