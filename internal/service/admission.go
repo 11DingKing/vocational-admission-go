@@ -79,12 +79,13 @@ func (s AdmissionService) Submit(ctx context.Context, a domain.Application, acto
 		if e = s.Audits.Record(ctx, tx, actor, "application", id, "submit", "success", req, a.StudentNo); e != nil {
 			return e
 		}
-		return nil
+		// Enqueue the notification in the same transaction so the application
+		// record, capacity reservation and outbox job commit atomically. A
+		// post-commit enqueue would leave the seat and application persisted
+		// while the API returns an error.
+		return s.Jobs.Enqueue(ctx, tx, "notify_submission", id)
 	})
 	if e != nil {
-		return a, e
-	}
-	if e = s.Jobs.EnqueueCommitted(ctx, "notify_submission", id); e != nil {
 		return a, e
 	}
 	return s.Apps.ByID(ctx, id)
