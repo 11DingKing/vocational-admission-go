@@ -64,6 +64,33 @@ func TestSubmitCapacity(t *testing.T) {
 		}
 	}
 }
+func TestSubmitPlanFullRollsBackGroup(t *testing.T) {
+	s, db, pid, _ := svc(t)
+	// Group whose capacity exceeds the plan's, so it still has room once the
+	// plan is full. This is exactly the condition that exposes the bug: the
+	// group reservation succeeds, the plan reservation fails, and the group
+	// increment must be rolled back rather than leaked.
+	gid, e := db.SQL.Exec("INSERT INTO major_groups(plan_id,code,name,capacity) VALUES(?,?,?,?)", pid, "GB", "网络", 2)
+	if e != nil {
+		t.Fatal(e)
+	}
+	gidID, _ := gid.LastInsertId()
+	// Pre-fill the plan to capacity so the next submit's plan reservation fails.
+	if _, e := db.SQL.Exec("UPDATE plans SET used_capacity=total_capacity WHERE id=?", pid); e != nil {
+		t.Fatal(e)
+	}
+	_, e = s.Submit(context.Background(), domain.Application{PlanID: pid, MajorGroupID: gidID, StudentNo: "20260010", Score: 600, Rank: 1, IdempotencyKey: "rb-1"}, 1, "r")
+	if e == nil {
+		t.Fatal("plan-full submission accepted")
+	}
+	var used int
+	if e := db.SQL.QueryRow("SELECT used_capacity FROM major_groups WHERE id=?", gidID).Scan(&used); e != nil {
+		t.Fatal(e)
+	}
+	if used != 0 {
+		t.Fatalf("group used_capacity leaked after plan-full rejection: got %d want 0", used)
+	}
+}
 func TestDecisionFlow(t *testing.T) {
 	s, _, pid, gid := svc(t)
 	a, e := s.Submit(context.Background(), domain.Application{PlanID: pid, MajorGroupID: gid, StudentNo: "20260002", Score: 700, Rank: 2, IdempotencyKey: "flow"}, 1, "r")

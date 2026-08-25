@@ -69,11 +69,7 @@ func (s AdmissionService) Submit(ctx context.Context, a domain.Application, acto
 	a.UpdatedAt = a.SubmittedAt
 	var id int64
 	e = s.DB.Tx(ctx, func(tx *sql.Tx) error {
-		if e := s.Plans.ReserveGroupCommitted(ctx, a.PlanID, a.MajorGroupID); e != nil {
-
-			return e
-		}
-		if e := s.Plans.ReservePlanCommitted(ctx, a.PlanID); e != nil {
+		if e := s.Plans.Reserve(ctx, tx, a.PlanID, a.MajorGroupID); e != nil {
 			return e
 		}
 		id, e = s.Apps.Create(ctx, tx, a)
