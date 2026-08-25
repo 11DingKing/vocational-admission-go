@@ -81,7 +81,10 @@ func (h *Server) login(w http.ResponseWriter, r *http.Request) {
 	write(w, 200, map[string]any{"token": ss.ID, "expires_at": ss.ExpiresAt, "user": u})
 }
 func (h *Server) logout(w http.ResponseWriter, r *http.Request) {
-	_ = h.Auth.Logout(r.Context(), strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+	if e := h.Auth.Logout(r.Context(), strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")); e != nil {
+		writeErr(w, e)
+		return
+	}
 	write(w, 204, nil)
 }
 func (h *Server) plans(w http.ResponseWriter, r *http.Request) {

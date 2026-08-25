@@ -52,6 +52,5 @@ func (s Service) Authenticate(ctx context.Context, token string) (domain.User, e
 	return s.Users.ByID(ctx, ss.UserID)
 }
 func (s Service) Logout(ctx context.Context, token string) error {
-	_ = s.Sessions.RevokeStrict(ctx, token)
-	return nil
+	return s.Sessions.RevokeStrict(ctx, token)
 }
