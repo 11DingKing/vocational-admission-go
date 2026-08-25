@@ -100,4 +100,30 @@ func TestContextCancellation(t *testing.T) {
 	}
 }
 
+func TestClosePlanBlocksPending(t *testing.T) {
+	s, _, pid, gid := svc(t)
+	// Freshly submitted application: plan must not close.
+	a, e := s.Submit(context.Background(), domain.Application{PlanID: pid, MajorGroupID: gid, StudentNo: "20260010", Score: 650, Rank: 5, IdempotencyKey: "close-submitted"}, 1, "r")
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = s.ClosePlan(context.Background(), pid, 1, "r"); e == nil {
+		t.Fatal("plan closed with a pending submitted application")
+	}
+	// Move into reviewing: still pending, plan must not close.
+	if e = s.Decide(context.Background(), a.ID, domain.ApplicationReviewing, "review", 2, "r"); e != nil {
+		t.Fatal(e)
+	}
+	if e = s.ClosePlan(context.Background(), pid, 1, "r"); e == nil {
+		t.Fatal("plan closed with a pending reviewing application")
+	}
+	// Reach a terminal decision: now the plan may close.
+	if e = s.Admit(context.Background(), a.ID, 2, "r"); e != nil {
+		t.Fatal(e)
+	}
+	if e = s.ClosePlan(context.Background(), pid, 1, "r"); e != nil {
+		t.Fatalf("plan should close once pending applications are resolved: %v", e)
+	}
+}
+
 var _ *sql.Tx

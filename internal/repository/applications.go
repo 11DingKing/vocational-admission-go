@@ -61,6 +61,18 @@ func (r ApplicationRepo) Transition(ctx context.Context, id int64, from, to doma
 	}
 	return nil
 }
+// CountPending returns the number of applications for a plan that have not yet
+// reached a terminal decision, i.e. are still submitted or reviewing. A plan
+// must not be closed while such applications exist, otherwise they can never
+// be reviewed since PlanClosed does not transition to any other state.
+func (r ApplicationRepo) CountPending(ctx context.Context, tx *sql.Tx, planID int64) (int, error) {
+	var n int
+	e := tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM applications WHERE plan_id=? AND status IN (?,?)", planID, domain.ApplicationSubmitted, domain.ApplicationReviewing).Scan(&n)
+	if e != nil {
+		return 0, fmt.Errorf("count pending applications: %w", e)
+	}
+	return n, nil
+}
 func (r ApplicationRepo) List(ctx context.Context, planID int64, status string, limit, offset int) ([]domain.Application, error) {
 	q := "SELECT id FROM applications WHERE plan_id=?"
 	args := []any{planID}
