@@ -1,0 +1,2 @@
+-- Admission entities: users, sessions, province_rules, plans, major_groups,
+-- applications, decisions, audit_events and jobs are created by migration 2-5.
