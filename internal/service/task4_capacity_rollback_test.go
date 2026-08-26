@@ -1,0 +1,3 @@
+package service
+import("context";"testing";"github.com/11DingKing/vocational-admission-go/internal/domain")
+func TestPlanFailureDoesNotLeakGroupCapacity(t *testing.T){s,db,pid,gid:=svc(t);if _,e:=db.SQL.Exec("UPDATE plans SET used_capacity=total_capacity WHERE id=?",pid);e!=nil{t.Fatal(e)};_,e:=s.Submit(context.Background(),domain.Application{PlanID:pid,MajorGroupID:gid,StudentNo:"20264001",Score:600,Rank:1,IdempotencyKey:"leak"},1,"r");if e==nil{t.Fatal("expected capacity error")};var used int;if e=db.SQL.QueryRow("SELECT used_capacity FROM major_groups WHERE id=?",gid).Scan(&used);e!=nil{t.Fatal(e)};if used!=0{t.Fatalf("group capacity leaked: %d",used)}}
